@@ -47,28 +47,28 @@
         .top-bar {
             display: flex;
             justify-content: space-between;
-            width: 80%;
-            max-width: 600px;
+            width: 90%;
+            max-width: 700px;
             font-size: 1.2rem;
             margin-bottom: 2rem;
             color: #8e8e93;
             font-weight: 500;
         }
 
-        /* Flip Clock CSS */
+        /* Flip Clock CSS - Adjusted to fit 3 cards */
         .clock-container {
             display: flex;
-            gap: 20px;
-            font-size: 8rem;
+            gap: 15px;
+            font-size: 6.5rem;
             font-weight: 700;
             perspective: 1000px;
         }
 
         .flip-card {
             background-color: var(--card-bg);
-            padding: 20px 30px;
-            border-radius: 20px;
-            min-width: 180px;
+            padding: 15px 20px;
+            border-radius: 18px;
+            min-width: 130px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             position: relative;
@@ -102,10 +102,10 @@
             cursor: pointer;
         }
 
-        /* Landscape orientation warning */
+        /* Landscape orientation warning / Portrait mode */
         @media (orientation: portrait) {
-            .clock-container { font-size: 5rem; flex-direction: column; }
-            .flip-card { min-width: 140px; }
+            .clock-container { font-size: 4rem; flex-direction: column; gap: 10px; }
+            .flip-card { min-width: 120px; padding: 10px 15px; }
         }
     </style>
 </head>
@@ -120,6 +120,7 @@
     <div class="clock-container">
         <div class="flip-card" id="hour">12</div>
         <div class="flip-card" id="minute">00</div>
+        <div class="flip-card" id="second">00</div>
     </div>
 
     <div class="controls">
@@ -129,22 +130,25 @@
 </div>
 
 <script>
-    // 1. Clock Logic
+    // 1. Clock Logic (Now including Seconds)
     function updateClock() {
         const now = new Date();
         let h = now.getHours();
         let m = now.getMinutes();
+        let s = now.getSeconds(); // Fetch seconds
         
         // Format to 12-hour
         h = h % 12 || 12; 
         
         document.getElementById('hour').innerText = h.toString().padStart(2, '0');
         document.getElementById('minute').innerText = m.toString().padStart(2, '0');
+        document.getElementById('second').innerText = s.toString().padStart(2, '0'); // Update seconds display
         
         // Update Date
         const options = { weekday: 'short', month: 'short', day: 'numeric' };
         document.getElementById('date-display').innerText = now.toLocaleDateString('en-US', options);
     }
+    // Runs every 1000ms (1 second) to keep seconds perfectly synced
     setInterval(updateClock, 1000);
     updateClock();
 
