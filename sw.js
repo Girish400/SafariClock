@@ -1,20 +1,22 @@
-const CACHE_NAME = 'standby-clock-v1';
-const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json'
+const CACHE_NAME = 'safari-clock-v1';
+const assets = [
+  '/SafariClock/',
+  '/SafariClock/index.html',
+  '/SafariClock/manifest.json'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+self.addEventListener('install', (evt) => {
+  evt.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      cache.addAll(assets);
+    })
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+self.addEventListener('fetch', (evt) => {
+  evt.respondWith(
+    caches.match(evt.request).then((res) => {
+      return res || fetch(evt.request);
+    })
   );
 });
