@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>StandBy Clock</title>
+    <meta name="apple-mobile-web-app-title" content="SafariClock">
     <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4843/4843058.png">
+    <title>SafariClock | StandBy</title>
     <style>
         :root {
             --bg-color: #000000;
+            --card-bg: #1a1a1a;
             --text-color: #ffffff;
-            --card-bg: #1c1c1e;
-            --dim-opacity: 1;
-            --shift-x: 0px;
-            --shift-y: 0px;
+            --accent-color: #ff3b30; /* Night Mode Red */
+            --flip-speed: 0.6s;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,186 +23,181 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
             height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             overflow: hidden;
-            opacity: var(--dim-opacity);
-            transition: opacity 0.5s ease;
+            transition: color 0.5s ease;
         }
 
-        /* Container for Burn-in Protection */
-        #app-container {
-            transform: translate(var(--shift-x), var(--shift-y));
-            transition: transform 1s ease-in-out;
+        /* Burn-in Protection Container */
+        #burn-in-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
+            gap: 20px;
+            transition: transform 1s ease-in-out;
         }
 
-        /* StandBy Style Info Bar */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            width: 90%;
-            max-width: 700px;
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            color: #8e8e93;
-            font-weight: 500;
-        }
-
-        /* Flip Clock CSS - Adjusted to fit 3 cards */
-        .clock-container {
+        /* Flip Clock Styles */
+        .clock {
             display: flex;
             gap: 15px;
-            font-size: 6.5rem;
-            font-weight: 700;
             perspective: 1000px;
         }
 
-        .flip-card {
-            background-color: var(--card-bg);
-            padding: 15px 20px;
-            border-radius: 18px;
-            min-width: 130px;
+        .flip-unit {
+            position: relative;
+            width: 120px;
+            height: 180px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            font-size: 100px;
+            font-weight: 700;
+            line-height: 180px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative;
         }
 
-        /* Divider Line for realism */
-        .flip-card::after {
-            content: "";
+        .flip-unit::after {
+            content: '';
             position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: black;
+            top: 50%; left: 0; width: 100%; height: 2px;
+            background: rgba(0,0,0,0.6);
             z-index: 5;
         }
 
-        .controls {
-            margin-top: 3rem;
+        /* Top Info Bar */
+        .status-bar {
+            position: absolute;
+            top: 40px;
+            width: 90%;
             display: flex;
-            gap: 20px;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: 500;
+            opacity: 0.8;
         }
 
-        button {
-            background: #2c2c2e;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 15px;
-            font-size: 1rem;
-            cursor: pointer;
+        /* Night Mode Logic */
+        body.night-mode {
+            color: var(--accent-color);
+        }
+        body.night-mode .flip-unit {
+            color: var(--accent-color);
+            border: 1px solid #300;
         }
 
-        /* Landscape orientation warning / Portrait mode */
-        @media (orientation: portrait) {
-            .clock-container { font-size: 4rem; flex-direction: column; gap: 10px; }
-            .flip-card { min-width: 120px; padding: 10px 15px; }
+        /* Landscape Adjustments */
+        @media (orientation: landscape) {
+            #burn-in-wrapper { flex-direction: row; gap: 60px; }
+            .flip-unit { width: 180px; height: 240px; font-size: 150px; line-height: 240px; }
+        }
+
+        #start-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 100;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-<div id="app-container">
-    <div class="top-bar">
-        <div id="date-display">Mon, Jan 1</div>
-        <div id="weather-battery">☀️ 72°F | 🔋 <span id="batt-level">--%</span></div>
+    <div id="start-overlay" onclick="initApp()">
+        <p>Tap to Start SafariClock</p>
     </div>
 
-    <div class="clock-container">
-        <div class="flip-card" id="hour">12</div>
-        <div class="flip-card" id="minute">00</div>
-        <div class="flip-card" id="second">00</div>
+    <div class="status-bar">
+        <div id="weather">Loading Weather...</div>
+        <div id="battery">--%</div>
     </div>
 
-    <div class="controls">
-        <button onclick="toggleDim()">🌙 Dim</button>
-        <button onclick="requestWakeLock()" id="wake-btn">🔓 Enable Always-On</button>
+    <div id="burn-in-wrapper">
+        <div class="clock">
+            <div class="flip-unit" id="hr">00</div>
+            <div class="flip-unit" id="min">00</div>
+            <div class="flip-unit" id="sec">00</div>
+        </div>
+        <div id="date-display" style="font-size: 24px; letter-spacing: 2px;">LOADING DATE</div>
     </div>
-</div>
 
-<script>
-    // 1. Clock Logic (Now including Seconds)
-    function updateClock() {
-        const now = new Date();
-        let h = now.getHours();
-        let m = now.getMinutes();
-        let s = now.getSeconds(); // Fetch seconds
-        
-        // Format to 12-hour
-        h = h % 12 || 12; 
-        
-        document.getElementById('hour').innerText = h.toString().padStart(2, '0');
-        document.getElementById('minute').innerText = m.toString().padStart(2, '0');
-        document.getElementById('second').innerText = s.toString().padStart(2, '0'); // Update seconds display
-        
-        // Update Date
-        const options = { weekday: 'short', month: 'short', day: 'numeric' };
-        document.getElementById('date-display').innerText = now.toLocaleDateString('en-US', options);
-    }
-    // Runs every 1000ms (1 second) to keep seconds perfectly synced
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // 2. Wake Lock (Always On Display)
-    let wakeLock = null;
-    async function requestWakeLock() {
-        try {
-            wakeLock = await navigator.wakeLock.request('screen');
-            document.getElementById('wake-btn').innerText = '🔒 Always-On Active';
-            document.getElementById('wake-btn').style.color = '#32d74b';
-        } catch (err) {
-            console.error(`${err.name}, ${err.message}`);
+    <script>
+        // 1. Wake Lock API
+        let wakeLock = null;
+        async function requestWakeLock() {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+            } catch (err) { console.error(`${err.name}, ${err.message}`); }
         }
-    }
-    document.addEventListener('visibilitychange', async () => {
-        if (wakeLock !== null && document.visibilityState === 'visible') {
-            await requestWakeLock();
-        }
-    });
 
-    // 3. Burn-In Protection (Pixel Shifting every minute)
-    setInterval(() => {
-        const x = Math.floor(Math.random() * 20) - 10; // Shift -10px to +10px
-        const y = Math.floor(Math.random() * 20) - 10;
-        document.documentElement.style.setProperty('--shift-x', `${x}px`);
-        document.documentElement.style.setProperty('--shift-y', `${y}px`);
-    }, 60000);
+        // 2. Clock Logic
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('hr').innerText = h;
+            document.getElementById('min').innerText = m;
+            document.getElementById('sec').innerText = s;
 
-    // 4. Night Dim Mode
-    let isDimmed = false;
-    function toggleDim() {
-        isDimmed = !isDimmed;
-        document.documentElement.style.setProperty('--dim-opacity', isDimmed ? '0.3' : '1');
-    }
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('date-display').innerText = now.toLocaleDateString(undefined, options).toUpperCase();
 
-    // 5. Battery API (Note: iOS Safari support varies, this degrades gracefully)
-    if ('getBattery' in navigator) {
-        navigator.getBattery().then(function(battery) {
-            function updateBattery() {
-                let level = Math.round(battery.level * 100) + '%';
-                let icon = battery.charging ? '⚡' : '🔋';
-                document.getElementById('batt-level').innerText = icon + ' ' + level;
+            // Auto-Night Mode (10 PM - 6 AM)
+            const hour = now.getHours();
+            if (hour >= 22 || hour < 6) {
+                document.body.classList.add('night-mode');
+            } else {
+                document.body.classList.remove('night-mode');
             }
+        }
+
+        // 3. Burn-in Protection (Pixel Shifting)
+        function pixelShift() {
+            const wrapper = document.getElementById('burn-in-wrapper');
+            const x = Math.floor(Math.random() * 10) - 5;
+            const y = Math.floor(Math.random() * 10) - 5;
+            wrapper.style.transform = `translate(${x}px, ${y}px)`;
+        }
+
+        // 4. Battery Status
+        navigator.getBattery?.().then(battery => {
+            const updateBattery = () => {
+                const level = Math.round(battery.level * 100);
+                document.getElementById('battery').innerText = `${battery.charging ? '⚡' : ''}${level}%`;
+            };
             updateBattery();
             battery.addEventListener('levelchange', updateBattery);
             battery.addEventListener('chargingchange', updateBattery);
         });
-    }
 
-    // 6. Service Worker Registration (For Offline PWA)
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-    }
-</script>
+        // 5. Basic Weather (Placeholder - requires API key for real data)
+        function fetchWeather() {
+            // In a real app, use: fetch(`https://api.openweathermap.org/data/2.5/weather?q=London&units=metric&appid=YOUR_KEY`)
+            document.getElementById('weather').innerText = "Sunny 24°C";
+        }
+
+        // Initialize
+        function initApp() {
+            document.getElementById('start-overlay').style.display = 'none';
+            requestWakeLock();
+            setInterval(updateClock, 1000);
+            setInterval(pixelShift, 60000); // Shift every minute
+            fetchWeather();
+            updateClock();
+            
+            // Go Fullscreen
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 </body>
 </html>
