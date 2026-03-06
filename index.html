@@ -14,11 +14,11 @@
             --bg-color: #000000;
             --card-bg: #1a1a1a;
             --text-color: #ffffff;
-            --accent-color: #ff3b30; /* Night Mode Red */
+            --accent-color: #ff3b30; 
             --flip-speed: 0.6s;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
             background-color: var(--bg-color);
@@ -26,112 +26,139 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
             height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
             transition: color 0.5s ease;
         }
 
-        /* Burn-in Protection Container */
+        /* Status Bar Info */
+        .status-bar {
+            position: absolute;
+            top: env(safe-area-inset-top, 40px);
+            width: 85%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: 600;
+            opacity: 0.6;
+            z-index: 10;
+        }
+
+        /* Main Container for Burn-in Protection */
         #burn-in-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 25px; /* Space between Time and Date */
             transition: transform 1s ease-in-out;
         }
 
-        /* Flip Clock Styles */
+        /* The Clock Layout */
         .clock {
             display: flex;
-            gap: 15px;
-            perspective: 1000px;
+            align-items: center;
+            gap: 10px;
         }
 
         .flip-unit {
             position: relative;
-            width: 120px;
-            height: 180px;
+            width: 90px;
+            height: 130px;
             background: var(--card-bg);
             border-radius: 12px;
-            font-size: 100px;
+            font-size: 80px;
             font-weight: 700;
-            line-height: 180px;
+            line-height: 130px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.8);
         }
 
+        /* Divider Line on Cards */
         .flip-unit::after {
             content: '';
             position: absolute;
-            top: 50%; left: 0; width: 100%; height: 2px;
-            background: rgba(0,0,0,0.6);
+            top: 50%; left: 0; width: 100%; height: 1px;
+            background: rgba(0,0,0,0.4);
             z-index: 5;
         }
 
-        /* Top Info Bar */
-        .status-bar {
-            position: absolute;
-            top: 40px;
-            width: 90%;
-            display: flex;
-            justify-content: space-between;
-            font-size: 18px;
+        .separator {
+            font-size: 60px;
+            font-weight: 700;
+            color: var(--text-color);
+            padding-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Date Styling */
+        #date-display {
+            font-size: 20px;
             font-weight: 500;
+            letter-spacing: 3px;
             opacity: 0.8;
+            text-transform: uppercase;
         }
 
-        /* Night Mode Logic */
-        body.night-mode {
-            color: var(--accent-color);
-        }
-        body.night-mode .flip-unit {
-            color: var(--accent-color);
-            border: 1px solid #300;
-        }
+        /* Night Mode Red Theme */
+        body.night-mode { color: var(--accent-color); }
+        body.night-mode .flip-unit { color: var(--accent-color); border: 1px solid #400; }
+        body.night-mode .separator { color: var(--accent-color); }
 
-        /* Landscape Adjustments */
+        /* Landscape / StandBy Mode Adjustments */
         @media (orientation: landscape) {
-            #burn-in-wrapper { flex-direction: row; gap: 60px; }
-            .flip-unit { width: 180px; height: 240px; font-size: 150px; line-height: 240px; }
+            .flip-unit { width: 160px; height: 220px; font-size: 140px; line-height: 220px; }
+            .separator { font-size: 100px; }
+            #date-display { font-size: 28px; }
+            #burn-in-wrapper { gap: 30px; }
         }
 
         #start-overlay {
             position: fixed; inset: 0; background: #000; z-index: 100;
-            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
     <div id="start-overlay" onclick="initApp()">
-        <p>Tap to Start SafariClock</p>
+        <p style="font-size: 20px;">Tap to Launch SafariClock</p>
+        <p style="font-size: 12px; opacity: 0.5; margin-top: 10px;">Enabling Wake-Lock & Fullscreen</p>
     </div>
 
     <div class="status-bar">
-        <div id="weather">Loading Weather...</div>
+        <div id="weather">PARIS 21°C</div>
         <div id="battery">--%</div>
     </div>
 
     <div id="burn-in-wrapper">
         <div class="clock">
             <div class="flip-unit" id="hr">00</div>
+            <div class="separator">:</div>
             <div class="flip-unit" id="min">00</div>
+            <div class="separator">:</div>
             <div class="flip-unit" id="sec">00</div>
         </div>
-        <div id="date-display" style="font-size: 24px; letter-spacing: 2px;">LOADING DATE</div>
+        <div id="date-display">LOADING DATE</div>
     </div>
 
     <script>
-        // 1. Wake Lock API
         let wakeLock = null;
+
         async function requestWakeLock() {
             try {
-                wakeLock = await navigator.wakeLock.request('screen');
-            } catch (err) { console.error(`${err.name}, ${err.message}`); }
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) { console.log("WakeLock failed"); }
         }
 
-        // 2. Clock Logic
         function updateClock() {
             const now = new Date();
             const h = String(now.getHours()).padStart(2, '0');
@@ -142,59 +169,42 @@
             document.getElementById('min').innerText = m;
             document.getElementById('sec').innerText = s;
 
-            const options = { weekday: 'long', month: 'long', day: 'numeric' };
-            document.getElementById('date-display').innerText = now.toLocaleDateString(undefined, options).toUpperCase();
+            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            document.getElementById('date-display').innerText = now.toLocaleDateString(undefined, options);
 
-            // Auto-Night Mode (10 PM - 6 AM)
-            const hour = now.getHours();
-            if (hour >= 22 || hour < 6) {
+            // Auto-Night Mode Logic
+            if (now.getHours() >= 21 || now.getHours() < 6) {
                 document.body.classList.add('night-mode');
             } else {
                 document.body.classList.remove('night-mode');
             }
         }
 
-        // 3. Burn-in Protection (Pixel Shifting)
         function pixelShift() {
             const wrapper = document.getElementById('burn-in-wrapper');
-            const x = Math.floor(Math.random() * 10) - 5;
-            const y = Math.floor(Math.random() * 10) - 5;
+            const x = Math.floor(Math.random() * 8) - 4;
+            const y = Math.floor(Math.random() * 8) - 4;
             wrapper.style.transform = `translate(${x}px, ${y}px)`;
         }
 
-        // 4. Battery Status
-        navigator.getBattery?.().then(battery => {
-            const updateBattery = () => {
-                const level = Math.round(battery.level * 100);
-                document.getElementById('battery').innerText = `${battery.charging ? '⚡' : ''}${level}%`;
-            };
-            updateBattery();
-            battery.addEventListener('levelchange', updateBattery);
-            battery.addEventListener('chargingchange', updateBattery);
-        });
-
-        // 5. Basic Weather (Placeholder - requires API key for real data)
-        function fetchWeather() {
-            // In a real app, use: fetch(`https://api.openweathermap.org/data/2.5/weather?q=London&units=metric&appid=YOUR_KEY`)
-            document.getElementById('weather').innerText = "Sunny 24°C";
-        }
-
-        // Initialize
         function initApp() {
             document.getElementById('start-overlay').style.display = 'none';
             requestWakeLock();
             setInterval(updateClock, 1000);
-            setInterval(pixelShift, 60000); // Shift every minute
-            fetchWeather();
+            setInterval(pixelShift, 45000); // Shift every 45s
             updateClock();
             
-            // Go Fullscreen
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            }
+            // Handle Battery
+            navigator.getBattery?.().then(battery => {
+                const updateBat = () => {
+                    document.getElementById('battery').innerText = `${battery.charging ? '⚡' : ''}${Math.round(battery.level * 100)}%`;
+                };
+                updateBat();
+                battery.onlevelchange = updateBat;
+                battery.onchargingchange = updateBat;
+            });
         }
 
-        // Register Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
