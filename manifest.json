@@ -1,17 +1,16 @@
 {
-  "name": "Flip Clock StandBy",
-  "short_name": "StandBy",
-  "description": "Always-on OLED Flip Clock for iOS",
-  "start_url": "./index.html",
+  "name": "SafariClock",
+  "short_name": "Clock",
+  "start_url": "/SafariClock/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "orientation": "landscape",
   "icons": [
     {
-      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Clock_Icon.svg/512px-Clock_Icon.svg.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/4843/4843058.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
