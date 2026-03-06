@@ -5,17 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SafariClock">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4843/4843058.png">
-    <title>SafariClock | StandBy</title>
+    <title>SafariClock Pro</title>
     <style>
         :root {
             --bg-color: #000000;
             --card-bg: #1a1a1a;
             --text-color: #ffffff;
             --accent-color: #ff3b30; 
-            --flip-speed: 0.6s;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -30,93 +28,106 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            transition: color 0.5s ease;
         }
 
         /* Status Bar Info */
         .status-bar {
             position: absolute;
-            top: env(safe-area-inset-top, 40px);
-            width: 85%;
+            top: env(safe-area-inset-top, 20px);
+            width: 90%;
             display: flex;
             justify-content: space-between;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
-            opacity: 0.6;
+            opacity: 0.5;
             z-index: 10;
         }
 
-        /* Main Container for Burn-in Protection */
         #burn-in-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 25px; /* Space between Time and Date */
+            gap: 30px; 
             transition: transform 1s ease-in-out;
+            width: 100%;
         }
 
-        /* The Clock Layout */
+        /* 1.5x SCALED CLOCK */
         .clock {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .flip-unit {
             position: relative;
-            width: 90px;
-            height: 130px;
+            /* Scaled from 90x130 to 135x195 */
+            width: 130px; 
+            height: 180px;
             background: var(--card-bg);
-            border-radius: 12px;
-            font-size: 80px;
-            font-weight: 700;
-            line-height: 130px;
+            border-radius: 16px;
+            /* Scaled from 80px to 120px */
+            font-size: 110px; 
+            font-weight: 800;
+            line-height: 180px;
             text-align: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
         }
 
-        /* Divider Line on Cards */
         .flip-unit::after {
             content: '';
             position: absolute;
-            top: 50%; left: 0; width: 100%; height: 1px;
-            background: rgba(0,0,0,0.4);
+            top: 50%; left: 0; width: 100%; height: 1.5px;
+            background: rgba(0,0,0,0.5);
             z-index: 5;
         }
 
         .separator {
-            font-size: 60px;
+            /* Scaled from 60px to 90px */
+            font-size: 80px;
             font-weight: 700;
-            color: var(--text-color);
             padding-bottom: 10px;
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            50% { opacity: 0.2; }
         }
 
         /* Date Styling */
         #date-display {
-            font-size: 20px;
-            font-weight: 500;
-            letter-spacing: 3px;
-            opacity: 0.8;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 4px;
+            opacity: 0.7;
             text-transform: uppercase;
         }
 
-        /* Night Mode Red Theme */
+        /* Night Mode */
         body.night-mode { color: var(--accent-color); }
-        body.night-mode .flip-unit { color: var(--accent-color); border: 1px solid #400; }
+        body.night-mode .flip-unit { color: var(--accent-color); border: 1px solid #300; }
         body.night-mode .separator { color: var(--accent-color); }
 
-        /* Landscape / StandBy Mode Adjustments */
+        /* LANDSCAPE OPTIMIZATION (THE "STANDBY" LOOK) */
         @media (orientation: landscape) {
-            .flip-unit { width: 160px; height: 220px; font-size: 140px; line-height: 220px; }
-            .separator { font-size: 100px; }
-            #date-display { font-size: 28px; }
-            #burn-in-wrapper { gap: 30px; }
+            .clock { gap: 15px; }
+            .flip-unit { 
+                /* Ultra-large Landscape Scale */
+                width: 230px; 
+                height: 310px; 
+                font-size: 210px; 
+                line-height: 310px; 
+            }
+            .separator { font-size: 140px; }
+            #date-display { font-size: 32px; margin-top: 10px; }
+            #burn-in-wrapper { gap: 20px; }
+        }
+
+        /* Hide Seconds on very small screens in portrait to prevent overflow */
+        @media (max-width: 380px) and (orientation: portrait) {
+            .flip-unit { width: 100px; height: 150px; font-size: 80px; line-height: 150px; }
+            .separator { font-size: 50px; }
         }
 
         #start-overlay {
@@ -128,12 +139,12 @@
 <body>
 
     <div id="start-overlay" onclick="initApp()">
-        <p style="font-size: 20px;">Tap to Launch SafariClock</p>
-        <p style="font-size: 12px; opacity: 0.5; margin-top: 10px;">Enabling Wake-Lock & Fullscreen</p>
+        <p style="font-size: 24px; font-weight: 700;">ENTER SAFARICLOCK</p>
+        <p style="font-size: 14px; opacity: 0.5; margin-top: 15px;">Wake-Lock & Fullscreen Optimized</p>
     </div>
 
     <div class="status-bar">
-        <div id="weather">PARIS 21°C</div>
+        <div id="weather">CLEAR 22°C</div>
         <div id="battery">--%</div>
     </div>
 
@@ -145,7 +156,7 @@
             <div class="separator">:</div>
             <div class="flip-unit" id="sec">00</div>
         </div>
-        <div id="date-display">LOADING DATE</div>
+        <div id="date-display">LOADING...</div>
     </div>
 
     <script>
@@ -155,24 +166,21 @@
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
+                    console.log("Wake Lock Active");
                 }
-            } catch (err) { console.log("WakeLock failed"); }
+            } catch (err) { console.log("Wake Lock Failed"); }
         }
 
         function updateClock() {
             const now = new Date();
-            const h = String(now.getHours()).padStart(2, '0');
-            const m = String(now.getMinutes()).padStart(2, '0');
-            const s = String(now.getSeconds()).padStart(2, '0');
-            
-            document.getElementById('hr').innerText = h;
-            document.getElementById('min').innerText = m;
-            document.getElementById('sec').innerText = s;
+            document.getElementById('hr').innerText = String(now.getHours()).padStart(2, '0');
+            document.getElementById('min').innerText = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('sec').innerText = String(now.getSeconds()).padStart(2, '0');
 
-            const options = { weekday: 'short', month: 'short', day: 'numeric' };
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
             document.getElementById('date-display').innerText = now.toLocaleDateString(undefined, options);
 
-            // Auto-Night Mode Logic
+            // Night Mode Auto-Switch (9PM - 6AM)
             if (now.getHours() >= 21 || now.getHours() < 6) {
                 document.body.classList.add('night-mode');
             } else {
@@ -182,8 +190,8 @@
 
         function pixelShift() {
             const wrapper = document.getElementById('burn-in-wrapper');
-            const x = Math.floor(Math.random() * 8) - 4;
-            const y = Math.floor(Math.random() * 8) - 4;
+            const x = Math.floor(Math.random() * 12) - 6;
+            const y = Math.floor(Math.random() * 12) - 6;
             wrapper.style.transform = `translate(${x}px, ${y}px)`;
         }
 
@@ -191,23 +199,32 @@
             document.getElementById('start-overlay').style.display = 'none';
             requestWakeLock();
             setInterval(updateClock, 1000);
-            setInterval(pixelShift, 45000); // Shift every 45s
+            setInterval(pixelShift, 30000); // Shifting every 30s for safety
             updateClock();
             
-            // Handle Battery
-            navigator.getBattery?.().then(battery => {
-                const updateBat = () => {
-                    document.getElementById('battery').innerText = `${battery.charging ? '⚡' : ''}${Math.round(battery.level * 100)}%`;
-                };
-                updateBat();
-                battery.onlevelchange = updateBat;
-                battery.onchargingchange = updateBat;
-            });
+            // Battery API
+            if (navigator.getBattery) {
+                navigator.getBattery().then(battery => {
+                    const update = () => {
+                        document.getElementById('battery').innerText = `${battery.charging ? '⚡' : ''}${Math.round(battery.level * 100)}%`;
+                    };
+                    update();
+                    battery.onlevelchange = update;
+                    battery.onchargingchange = update;
+                });
+            }
         }
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
+
+        // Re-request wake lock when app is resumed
+        document.addEventListener('visibilitychange', () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                requestWakeLock();
+            }
+        });
     </script>
 </body>
 </html>
